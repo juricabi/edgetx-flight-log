@@ -7,7 +7,7 @@ where the link struggled, how high and how far, and where the model ended up.
 No computer, no Companion, no card reader. It reads the log on the radio,
 right after you land.
 
-![Flight summary on a HelloRadioSky V12](screenshots/summary.png)
+![Every screen, on a HelloRadioSky V12](screenshots/collage.png)
 
 ## It does not know what protocol you fly
 

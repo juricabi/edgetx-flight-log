@@ -768,6 +768,14 @@ local function fmtAuto(v)
     return format("%.2f", v)
 end
 
+-- Precision belongs to the column, not to each figure in it. Deciding per
+-- value put "0" next to "74.10" in the same row, which reads as two different
+-- kinds of number rather than as one sensor's range.
+local function precisionOf(a, b)
+    if (a and a ~= floor(a)) or (b and b ~= floor(b)) then return 2 end
+    return 0
+end
+
 local function duration()
     if not firstTime or not lastTime then return nil end
     local d = lastTime - firstTime
@@ -1156,7 +1164,7 @@ local function drawGraph()
         if bat then lo, hi = bat.low, bat.max end
     end
 
-    local dp = (hi < 100) and 1 or 0
+    local dp = precisionOf(lo, hi)
 
     -- The average has to come from the same readings the plot shows. Taking it
     -- from the unfiltered statistics let the bench period before the pack was
@@ -1179,9 +1187,9 @@ local function drawGraph()
     local avg = an > 0 and (asum / an) or lo
     -- the average is the one figure here that is not a reading the model ever
     -- took, so rounding it to whole numbers threw away what it is for
-    text(PAD, y, lbl("min " .. fmtAuto(lo) .. "   avg " .. fmt(avg, 2) ..
-                     "   max " .. fmtAuto(hi),
-                     fmtAuto(lo) .. " / " .. fmt(avg, 2) .. " / " .. fmtAuto(hi)),
+    text(PAD, y, lbl("min " .. fmt(lo, dp) .. "   avg " .. fmt(avg, 2) ..
+                     "   max " .. fmt(hi, dp),
+                     fmt(lo, dp) .. " / " .. fmt(avg, 2) .. " / " .. fmt(hi, dp)),
          C_DIM)
     y = y + LH + 2
 
@@ -1289,8 +1297,8 @@ local function drawGraph()
     -- the range is already spelled out above the plot, and on a small screen
     -- repeating it inside would sit on top of the line
     if COLOUR then
-        text(gx + 2, gy + 1, fmtAuto(hi), C_DIM)
-        text(gx + 2, gy + gh - LH - 1, fmtAuto(lo), C_DIM)
+        text(gx + 2, gy + 1, fmt(hi, dp), C_DIM)
+        text(gx + 2, gy + gh - LH - 1, fmt(lo, dp), C_DIM)
         rightText(gx + gw - 2, gy + gh - LH - 1, durationText(), C_DIM)
     end
 
@@ -1435,12 +1443,11 @@ local function drawSensors()
         local u = units[nm]
         if u and u ~= "" and COLOUR then nm = nm .. " " .. u end
         if k == ssel then rowHighlight(y) end
-        local frac = (cs.min ~= floor(cs.min)) or (cs.max ~= floor(cs.max))
-        local dp = (frac and abs(cs.max) < 1000) and 1 or 0
+        local dp = precisionOf(cs.min, cs.max)
         rowText(PAD, y, nm, k == ssel, k == ssel and C_ACC or C_TEXT)
-        rightText(c1, y, fmtAuto(cs.min), C_DIM)
+        rightText(c1, y, fmt(cs.min, dp), C_DIM)
         rightText(c2, y, fmt(cs.n > 0 and cs.sum / cs.n or 0, 2), C_TEXT)
-        rightText(c3, y, fmtAuto(cs.max), C_DIM)
+        rightText(c3, y, fmt(cs.max, dp), C_DIM)
         y = y + LH
     end
 
