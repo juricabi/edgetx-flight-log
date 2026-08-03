@@ -1,0 +1,5 @@
+# The radio reads these files straight off the card, so keep them as they are
+# written rather than letting a checkout on Windows rewrite the line endings.
+* text=auto eol=lf
+*.png binary
+*.bmp binary
