@@ -137,7 +137,7 @@ wrong.
 
 ## Support
 
-If it's useful to you, you can buy me a coffee:
+If you like it, you can buy me a coffee:
 
 [![Support me on Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/juricabi)
 
