@@ -101,7 +101,9 @@ once there are at least four satellites.
 
 ## Install
 
-1. Copy `flightlog.lua` to `SCRIPTS/TOOLS/` on the SD card.
+1. Download the zip from the [latest release](https://github.com/juricabi/edgetx-flight-log/releases/latest)
+   and extract it to the root of the SD card, or copy `flightlog.lua` to
+   `SCRIPTS/TOOLS/` yourself.
 2. On the radio: **SYS → Tools → Flight log**.
 
 Logging has to be switched on for the sensors you care about — a sensor with its

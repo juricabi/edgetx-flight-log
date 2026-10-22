@@ -1,0 +1,48 @@
+name: Release
+
+# Pushing a tag such as v1.1 builds a zip laid out like the SD card and
+# publishes it as a release. The tag's annotation becomes the release notes.
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      PACKAGE: edgetx-flight-log-${{ github.ref_name }}.zip
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build the zip
+        run: |
+          mkdir -p sd/SCRIPTS/TOOLS
+          cp flightlog.lua sd/SCRIPTS/TOOLS/
+          cd sd && zip -r -X "../$PACKAGE" .
+
+      - name: Write the release notes
+        run: |
+          # checkout fetches the tag as a bare commit, so get the annotation itself
+          git fetch --force --depth=1 origin "+$GITHUB_REF:$GITHUB_REF"
+          if [ "$(git cat-file -t "$GITHUB_REF_NAME")" = tag ]; then
+            git tag -l --format='%(contents)' "$GITHUB_REF_NAME" > notes.md
+          fi
+          cat >> notes.md <<EOF
+
+          ## Install
+
+          1. Download **$PACKAGE** below.
+          2. Extract it to the root of the SD card. It adds \`SCRIPTS/TOOLS/flightlog.lua\`.
+          3. On the radio: **SYS → Tools → Flight log**.
+
+          Logging has to be switched on for the sensors you want to see, a sensor that is not logged is not in the file.
+          EOF
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" "$PACKAGE" --title "Flight Log ${GITHUB_REF_NAME#v}" --notes-file notes.md
