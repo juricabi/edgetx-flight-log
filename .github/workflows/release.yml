@@ -1,11 +1,20 @@
 name: Release
 
-# Pushing a tag such as v1.1 builds a zip laid out like the SD card and
-# publishes it as a release. The tag's annotation becomes the release notes.
+# Builds a zip laid out like the SD card and publishes it as a release.
+# Either push a tag such as v1.1, whose annotation becomes the release notes,
+# or use Run workflow on the Actions tab and type the version and notes there.
 
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to release, such as v1.1
+        required: true
+      notes:
+        description: What changed, shown above the install steps
+        required: false
 
 permissions:
   contents: write
@@ -14,7 +23,9 @@ jobs:
   release:
     runs-on: ubuntu-latest
     env:
-      PACKAGE: edgetx-flight-log-${{ github.ref_name }}.zip
+      VERSION: ${{ inputs.version || github.ref_name }}
+      NOTES: ${{ inputs.notes }}
+      PACKAGE: edgetx-flight-log-${{ inputs.version || github.ref_name }}.zip
     steps:
       - uses: actions/checkout@v5
 
@@ -26,10 +37,14 @@ jobs:
 
       - name: Write the release notes
         run: |
-          # checkout fetches the tag as a bare commit, so get the annotation itself
-          git fetch --force --depth=1 origin "+$GITHUB_REF:$GITHUB_REF"
-          if [ "$(git cat-file -t "$GITHUB_REF_NAME")" = tag ]; then
-            git tag -l --format='%(contents)' "$GITHUB_REF_NAME" > notes.md
+          if [ "$GITHUB_EVENT_NAME" = push ]; then
+            # checkout fetches the tag as a bare commit, so get the annotation itself
+            git fetch --force --depth=1 origin "+$GITHUB_REF:$GITHUB_REF"
+            if [ "$(git cat-file -t "$VERSION")" = tag ]; then
+              git tag -l --format='%(contents)' "$VERSION" > notes.md
+            fi
+          else
+            printf '%s\n' "$NOTES" > notes.md
           fi
           cat >> notes.md <<EOF
 
@@ -45,4 +60,4 @@ jobs:
       - name: Publish the release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" "$PACKAGE" --title "Flight Log ${GITHUB_REF_NAME#v}" --notes-file notes.md
+        run: gh release create "$VERSION" "$PACKAGE" --target "$GITHUB_SHA" --title "Flight Log ${VERSION#v}" --notes-file notes.md
